@@ -14,7 +14,13 @@
         :root {
             --umb-yellow: #FFCD00;
             --umb-dark: #2C2A29;
-            --umb-gray: #f3f4f6;
+            --umb-gray: #ffcd00 ;
+              .bg-umb-yellow { background-color: #FFCD00; }
+  .text-umb-yellow { color: #FFCD00; }
+  .border-umb-yellow { border-color: #FFCD00; }
+
+  .bg-umb-dark { background-color: #2C2A29; }
+  .text-umb-dark { color: #2C2A29; }
         }
 
         body { 
@@ -344,55 +350,64 @@
         }
 
         // --- CHAT LOGIC ---
-        function appendMessage(sender, text, isUser = false) {
-            if(introView) introView.classList.add('hidden');
-            const div = document.createElement('div');
-            div.className = `flex ${isUser ? 'justify-end' : 'justify-start'} anim-enter`;
-            
-            if (isUser) {
-                // User: Yellow bubble, Black text
-                div.innerHTML = `
-                    <div class="bg-umb-yellow text-black px-5 py-3 rounded-2xl rounded-br-none max-w-[85%] text-sm font-bold shadow-sm border border-umb-yellow">
-                        ${text}
-                    </div>
-                `;
-            } else {
-                // Bot: Grey bubble, Black text + UMB Avatar
-                const parsed = marked.parse(text);
-                div.innerHTML = `
-                    <div class="flex items-start max-w-[90%]">
-                        <div class="w-8 h-8 bg-umb-dark rounded-full flex items-center justify-center text-umb-yellow text-[10px] font-extrabold mr-2 shrink-0 mt-1 border-2 border-umb-yellow">UMB</div>
-                        <div class="bg-gray-100 text-black px-5 py-4 rounded-2xl rounded-tl-none text-sm leading-relaxed prose prose-sm border border-gray-200 shadow-sm">
-                            ${parsed}
-                        </div>
-                    </div>
-                `;
-            }
-            msgContainer.appendChild(div);
-            chatBox.scrollTo({ top: chatBox.scrollHeight, behavior: 'smooth' });
-        }
+function appendMessage(sender, text, isUser = false) {
+    if (introView) introView.classList.add('hidden');
 
-        function showTyping() {
-            const div = document.createElement('div');
-            div.id = 'typing-indicator';
-            div.className = 'flex justify-start anim-enter';
-            div.innerHTML = `
-                <div class="flex items-center">
-                     <div class="w-8 h-8 bg-umb-dark rounded-full flex items-center justify-center text-umb-yellow text-[10px] font-extrabold mr-2 shrink-0 border-2 border-umb-yellow">UMB</div>
-                     <div class="bg-gray-100 px-4 py-3 rounded-2xl rounded-tl-none flex space-x-1 border border-gray-200">
-                        <div class="w-1.5 h-1.5 bg-umb-dark rounded-full typing-dot"></div>
-                        <div class="w-1.5 h-1.5 bg-umb-dark rounded-full typing-dot"></div>
-                        <div class="w-1.5 h-1.5 bg-umb-dark rounded-full typing-dot"></div>
-                     </div>
-                </div>`;
-            msgContainer.appendChild(div);
-            chatBox.scrollTo({ top: chatBox.scrollHeight, behavior: 'smooth' });
-        }
+    const div = document.createElement('div');
+    div.className = `flex ${isUser ? 'justify-end' : 'justify-start'} anim-enter`;
 
-        function removeTyping() {
-            const indicator = document.getElementById('typing-indicator');
-            if (indicator) indicator.remove();
-        }
+    if (isUser) {
+        // User: Mustard bubble, UMB dark text
+        div.innerHTML = `
+            <div class="bg-umb-yellow text-umb-dark px-5 py-3 rounded-2xl rounded-br-none max-w-[85%] text-sm font-bold shadow-sm border border-umb-yellow">
+                ${text}
+            </div>
+        `;
+    } else {
+        // Bot: Soft mustard bubble, UMB dark text + UMB avatar
+        const parsed = marked.parse(text);
+        div.innerHTML = `
+            <div class="flex items-start max-w-[90%]">
+                <div class="w-8 h-8 bg-umb-dark rounded-full flex items-center justify-center text-umb-yellow text-[10px] font-extrabold mr-2 shrink-0 mt-1 border-2 border-umb-yellow">
+                    UMB
+                </div>
+                <div class="bg-[#FFF4CC] text-umb-dark px-5 py-4 rounded-2xl rounded-tl-none text-sm leading-relaxed prose prose-sm border border-umb-yellow shadow-sm">
+                    ${parsed}
+                </div>
+            </div>
+        `;
+    }
+
+    msgContainer.appendChild(div);
+    chatBox.scrollTo({ top: chatBox.scrollHeight, behavior: 'smooth' });
+}
+
+function showTyping() {
+    const div = document.createElement('div');
+    div.id = 'typing-indicator';
+    div.className = 'flex justify-start anim-enter';
+
+    div.innerHTML = `
+        <div class="flex items-center">
+            <div class="w-8 h-8 bg-umb-dark rounded-full flex items-center justify-center text-umb-yellow text-[10px] font-extrabold mr-2 shrink-0 border-2 border-umb-yellow">
+                UMB
+            </div>
+            <div class="bg-[#FFF4CC] px-4 py-3 rounded-2xl rounded-tl-none flex space-x-1 border border-umb-yellow shadow-sm">
+                <div class="w-1.5 h-1.5 bg-umb-dark rounded-full typing-dot"></div>
+                <div class="w-1.5 h-1.5 bg-umb-dark rounded-full typing-dot"></div>
+                <div class="w-1.5 h-1.5 bg-umb-dark rounded-full typing-dot"></div>
+            </div>
+        </div>
+    `;
+
+    msgContainer.appendChild(div);
+    chatBox.scrollTo({ top: chatBox.scrollHeight, behavior: 'smooth' });
+}
+
+function removeTyping() {
+    const indicator = document.getElementById('typing-indicator');
+    if (indicator) indicator.remove();
+}
 
         async function getGeminiResponse(userQuery) {
             const knowledgeString = JSON.stringify(db.map(x => ({ keywords: x.keywords, answer: x.answer })));
