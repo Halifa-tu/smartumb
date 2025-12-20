@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Smart UMB</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2220%22 fill=%22%232C2A29%22/><text x=%2250%%22 y=%2255%%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 font-family=%22sans-serif%22 font-weight=%22900%22 font-size=%2240%22 fill=%22%23FFCD00%22>UMB</text></svg>">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.2/marked.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+        :root {
+            --umb-yellow: #FFCD00;
+            --umb-dark: #2C2A29;
+            --umb-gray: #f3f4f6;
+        }
+
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: #ffffff;
+            color: #1f2937; 
+        }
+
+        /* Custom Scrollbar */
+        .custom-scroll::-webkit-scrollbar { width: 6px; }
+        .custom-scroll::-webkit-scrollbar-track { background: transparent; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 10px; }
+        .custom-scroll::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
+
+        /* Animations */
+        @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .anim-enter { animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+
+        /* Typing Indicator */
+        .typing-dot { animation: typing 1.4s infinite ease-in-out both; background-color: var(--umb-dark); }
+        .typing-dot:nth-child(1) { animation-delay: -0.32s; }
+        .typing-dot:nth-child(2) { animation-delay: -0.16s; }
+        @keyframes typing { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
+
+        /* Markdown Styles */
+        .prose p { margin-bottom: 0.5em; line-height: 1.5; color: black; }
+        .prose ul { list-style-type: disc; padding-left: 1.2em; margin-bottom: 0.5em; color: black; }
+        .prose strong { font-weight: 700; color: black; }
+        .prose a { text-decoration: underline; color: black; }
+
+        /* Buttons */
+        .btn-primary { 
+            background: var(--umb-dark); 
+            color: var(--umb-yellow); 
+            font-weight: 700; 
+            border: 2px solid var(--umb-dark);
+            transition: all 0.2s;
+        }
+        .btn-primary:hover { 
+            background: black; 
+            color: #fff;
+        }
+
+        /* Header Style */
+        .brand-header {
+            background-color: var(--umb-yellow);
+            color: var(--umb-dark);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body class="h-screen flex flex-col overflow-hidden relative">
+
+    <!-- HEADER (Fixed Top - Yellow & Black) -->
+    <header class="h-16 brand-header flex items-center justify-between px-6 z-40 shrink-0">
+        <!-- Secret Admin Trigger (Top Left) -->
+        <div class="flex items-center gap-3 cursor-pointer select-none" ondblclick="checkAdminAccess()" title="Smart UMB">
+            <div class="w-9 h-9 bg-umb-dark rounded-full flex items-center justify-center text-umb-yellow font-extrabold text-[10px] border-2 border-umb-dark shadow-sm">
+                UMB
+            </div>
+            <span class="font-extrabold text-lg text-umb-dark tracking-tight">Smart UMB</span>
+        </div>
+    </header>
+
+    <!-- FIXED BACKGROUND WATERMARK (Does not move) -->
+    <div class="absolute inset-0 z-0 flex items-center justify-center pointer-events-none opacity-5">
+        <div class="flex flex-col items-center">
+            <div class="w-64 h-64 bg-umb-dark rounded-full flex items-center justify-center mb-4">
+                <span class="text-umb-yellow font-extrabold text-7xl tracking-tighter">SPEED</span>
+            </div>
+            <h1 class="text-6xl font-extrabold text-umb-dark tracking-tight">WE ARE UMB</h1>
+        </div>
+    </div>
+
+    <!-- CHAT AREA -->
+    <div id="chat-box" class="flex-1 overflow-y-auto p-4 custom-scroll scroll-smooth z-10 relative">
+        <div class="max-w-3xl mx-auto flex flex-col justify-end min-h-[50%] pb-4 pt-4">
+            
+            <!-- Intro Text (Disappears on first message) -->
+            <div id="intro-view" class="text-center py-10 transition-opacity duration-500">
+                <p class="text-gray-500 text-sm font-medium bg-white/80 inline-block px-4 py-2 rounded-full backdrop-blur-sm">
+                    How can we help you today?
+                </p>
+            </div>
+
+            <!-- Messages -->
+            <div id="messages-container" class="space-y-6 w-full"></div>
+        </div>
+    </div>
+
+    <!-- INPUT AREA -->
+    <div class="bg-white border-t border-gray-200 p-4 z-20 shrink-0">
+        <div class="max-w-3xl mx-auto">
+            <form onsubmit="event.preventDefault(); sendMessage();" class="relative flex items-center gap-2 shadow-sm rounded-full bg-white border-2 border-gray-100 focus-within:border-umb-yellow transition-all">
+                <input type="text" id="user-input" 
+                    class="flex-1 bg-transparent text-gray-800 border-0 rounded-full px-6 py-4 focus:ring-0 outline-none text-base placeholder-gray-400"
+                    placeholder="Ask a question..." autocomplete="off">
+                
+                <button type="submit" 
+                    class="w-10 h-10 mr-2 bg-umb-dark text-umb-yellow rounded-full flex items-center justify-center hover:scale-105 transition-transform shadow-md">
+                    <i class="fas fa-arrow-up text-sm"></i>
+                </button>
+            </form>
+            <p class="text-center text-[10px] text-gray-400 mt-3 font-bold uppercase tracking-widest">Our customers first</p>
+        </div>
+    </div>
+
+    <!-- ADMIN MODAL -->
+    <div id="admin-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center backdrop-blur-sm p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl flex flex-col max-h-[90vh] overflow-hidden">
+            
+            <!-- Modal Header -->
+            <div class="h-14 bg-umb-dark flex items-center justify-between px-6 shrink-0">
+                <h2 class="text-umb-yellow font-bold text-sm uppercase tracking-wide">Knowledge Base</h2>
+                <div class="flex gap-3">
+                    <button onclick="handleLogout()" class="text-xs text-gray-400 hover:text-white transition font-bold uppercase">Log Out</button>
+                    <button onclick="closeAdmin()" class="text-white hover:text-umb-yellow transition"><i class="fas fa-times"></i></button>
+                </div>
+            </div>
+
+            <!-- Auth View -->
+            <div id="auth-view" class="p-8 flex flex-col items-center justify-center h-full">
+                <div class="w-16 h-16 bg-umb-yellow rounded-full flex items-center justify-center mb-6 text-umb-dark text-2xl border-4 border-umb-dark"><i class="fas fa-lock"></i></div>
+                <h3 class="text-xl font-bold text-gray-900 mb-2">Admin Access</h3>
+                
+                <form onsubmit="event.preventDefault(); handleAuth();" class="w-full max-w-xs space-y-4 mt-4">
+                    <input type="text" id="auth-user" placeholder="Username" class="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-umb-yellow outline-none text-center transition bg-white focus:bg-gray-50 font-medium">
+                    <input type="password" id="auth-pass" placeholder="Password" class="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-umb-yellow outline-none text-center transition bg-white focus:bg-gray-50 font-medium">
+                    <button type="submit" class="w-full bg-umb-dark text-umb-yellow py-3.5 rounded-xl font-bold hover:bg-black transition shadow-lg uppercase tracking-wider text-sm">Unlock Dashboard</button>
+                </form>
+                <button onclick="resetAuth()" class="mt-6 text-xs text-red-400 hover:text-red-600 font-bold uppercase">Reset Account</button>
+            </div>
+
+            <!-- Dashboard View -->
+            <div id="dashboard-view" class="hidden flex-1 flex flex-col h-full bg-gray-50">
+                <div class="p-4 border-b border-gray-200 bg-white flex justify-between items-center gap-4">
+                    <div class="relative flex-1">
+                        <i class="fas fa-search absolute left-3 top-3 text-gray-400 text-xs"></i>
+                        <input type="text" id="kb-search" onkeyup="filterKB()" placeholder="Search entries..." class="w-full pl-9 pr-4 py-2 rounded-lg border border-gray-200 text-sm focus:border-umb-dark outline-none">
+                    </div>
+                    <button onclick="openEditor()" class="bg-umb-yellow text-umb-dark px-4 py-2 rounded-lg text-sm font-bold shadow-sm hover:brightness-105 transition border border-umb-dark"><i class="fas fa-plus mr-1"></i> New</button>
+                </div>
+                <div id="kb-grid" class="flex-1 overflow-y-auto p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 pb-20">
+                    <!-- Cards injected here -->
+                </div>
+            </div>
+
+            <!-- Editor View -->
+            <div id="editor-view" class="hidden flex-1 flex flex-col h-full bg-white p-6 overflow-y-auto">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-lg font-bold text-gray-800" id="editor-title">Edit Entry</h3>
+                    <button onclick="showDashboard()" class="text-sm text-gray-500 hover:text-black font-medium">Back to list</button>
+                </div>
+                <form onsubmit="event.preventDefault(); saveEntry();" class="space-y-5">
+                    <input type="hidden" id="entry-id">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="text-xs font-bold text-gray-500 uppercase tracking-wide">Category</label>
+                            <input type="text" id="entry-category" required class="w-full mt-1 px-4 py-3 rounded-lg border border-gray-300 focus:border-umb-yellow outline-none transition">
+                        </div>
+                        <div>
+                            <label class="text-xs font-bold text-gray-500 uppercase tracking-wide">Keywords</label>
+                            <input type="text" id="entry-keywords" required class="w-full mt-1 px-4 py-3 rounded-lg border border-gray-300 focus:border-umb-yellow outline-none transition">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold text-gray-500 uppercase tracking-wide">Answer</label>
+                        <textarea id="entry-answer" rows="8" required class="w-full mt-1 px-4 py-3 rounded-lg border border-gray-300 focus:border-umb-yellow outline-none transition"></textarea>
+                    </div>
+                    <div class="flex justify-between pt-2">
+                        <button type="button" id="delete-btn" onclick="deleteEntry()" class="text-red-500 text-sm font-bold hover:bg-red-50 px-4 py-2 rounded-lg transition">Delete</button>
+                        <div class="flex gap-3">
+                            <button type="button" onclick="showDashboard()" class="px-5 py-2.5 rounded-lg border border-gray-300 text-gray-600 font-bold text-sm hover:bg-gray-50 transition">Cancel</button>
+                            <button type="submit" class="px-6 py-2.5 rounded-lg bg-umb-dark text-white font-bold text-sm hover:bg-black transition shadow-md">Save Changes</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- LOGIC -->
+    <script>
+        const apiKey = "AIzaSyC6TYdda_6cDmfVLcbx9_Y6veB5N-a3sWg"; //gemini api
+        const chatBox = document.getElementById('chat-box');
+        const msgContainer = document.getElementById('messages-container');
+        const userInput = document.getElementById('user-input');
+        const introView = document.getElementById('intro-view');
+        
+        // --- DATA ---
+        const defaultData = [
+            { id: 1, category: 'General', keywords: ['history', 'founded', 'about'], answer: "Universal Merchant Bank (UMB) opened its doors on March 15, 1972. We are a leading indigenous Ghanaian bank, formerly known as 'Merchant Bank'." },
+            { id: 2, category: 'Leadership', keywords: ['ceo', 'manager', 'leadership', 'boss'], answer: "As of late 2024, **Mr. Felix Apau Awuku** has been appointed as the Acting CEO of UMB Bank, following Bank of Ghana approval." },
+            { id: 3, category: 'Accounts', keywords: ['open', 'account', 'requirements'], answer: "To open a personal account: Valid Ghana Card, Account opening form, 2 passport photos, Proof of address (Utility bill/GPS). Visit any branch or use the SpeedApp." },
+            { id: 4, category: 'Digital', keywords: ['speedapp', 'mobile app'], answer: "The UMB SpeedApp is your bank in your pocket. Features: Instant transfers (Momo/Bank), Bill Payments, Airtime Top-up, Loan Requests." },
+            { id: 5, category: 'Loans', keywords: ['loan', 'soda', 'salary advance'], answer: "We offer: Salary Overdraft (SODA), Personal Loans, SME Loans, and Auto Loans. Visit a branch to apply." },
+            { id: 6, category: 'Support', keywords: ['contact', 'phone', 'help'], answer: "Available 24/7. Toll-Free: 0800-100880. Direct: +233 302 666 331. Email: info@myumbbank.com." }
+        ];
+
+        let db = JSON.parse(localStorage.getItem('umb_kb')) || defaultData;
+        let isAdmin = false;
+        let currentEditId = null;
+
+        // --- ADMIN SYSTEM ---
+        function checkAdminAccess() {
+            document.getElementById('admin-modal').classList.remove('hidden');
+            if (isAdmin) showDashboard();
+            else showAuth();
+        }
+
+        function closeAdmin() {
+            document.getElementById('admin-modal').classList.add('hidden');
+        }
+
+        function showAuth() {
+            document.getElementById('auth-view').classList.remove('hidden');
+            document.getElementById('dashboard-view').classList.add('hidden');
+            document.getElementById('editor-view').classList.add('hidden');
+        }
+
+        function showDashboard() {
+            document.getElementById('auth-view').classList.add('hidden');
+            document.getElementById('dashboard-view').classList.remove('hidden');
+            document.getElementById('editor-view').classList.add('hidden');
+            renderKBGrid();
+        }
+
+        function showEditor(id = null) {
+            currentEditId = id;
+            document.getElementById('dashboard-view').classList.add('hidden');
+            document.getElementById('editor-view').classList.remove('hidden');
+            const delBtn = document.getElementById('delete-btn');
+            
+            if (id) {
+                const item = db.find(x => x.id === id);
+                document.getElementById('editor-title').innerText = "Edit Entry";
+                document.getElementById('entry-category').value = item.category;
+                document.getElementById('entry-keywords').value = item.keywords.join(', ');
+                document.getElementById('entry-answer').value = item.answer;
+                delBtn.classList.remove('hidden');
+            } else {
+                document.getElementById('editor-title').innerText = "New Entry";
+                document.getElementById('editor-form').reset();
+                delBtn.classList.add('hidden');
+            }
+        }
+
+        // --- AUTH ---
+        function handleAuth() {
+            const user = document.getElementById('auth-user').value;
+            const pass = document.getElementById('auth-pass').value;
+            if(!user || !pass) return alert("Fields required");
+
+            const stored = JSON.parse(localStorage.getItem('umb_admin_creds'));
+            
+            if(!stored) {
+                localStorage.setItem('umb_admin_creds', JSON.stringify({ user, pass }));
+                isAdmin = true;
+                showDashboard();
+            } else {
+                if (user === stored.user && pass === stored.pass) {
+                    isAdmin = true;
+                    showDashboard();
+                } else {
+                    alert("Invalid credentials");
+                }
+            }
+        }
+
+        function resetAuth() {
+            if(confirm("Delete current admin account?")) {
+                localStorage.removeItem('umb_admin_creds');
+                showAuth();
+            }
+        }
+
+        function handleLogout() {
+            isAdmin = false;
+            showAuth();
+        }
+
+        // --- CRUD ---
+        function openEditor() { showEditor(); }
+        function saveToStorage() { localStorage.setItem('umb_kb', JSON.stringify(db)); }
+        
+        function renderKBGrid() {
+            const term = document.getElementById('kb-search').value.toLowerCase();
+            const grid = document.getElementById('kb-grid');
+            grid.innerHTML = '';
+            
+            db.filter(item => item.keywords.join(' ').includes(term) || item.category.toLowerCase().includes(term) || item.answer.toLowerCase().includes(term))
+              .forEach(item => {
+                const div = document.createElement('div');
+                div.className = "bg-white p-4 rounded-xl border border-gray-200 hover:border-umb-yellow cursor-pointer shadow-sm group transition-all";
+                div.onclick = () => showEditor(item.id);
+                div.innerHTML = `
+                    <div class="flex justify-between items-start mb-2">
+                        <span class="text-[10px] font-bold bg-gray-100 px-2 py-1 rounded text-gray-600 uppercase tracking-wider">${item.category}</span>
+                        <i class="fas fa-pencil-alt text-gray-300 group-hover:text-umb-dark transition"></i>
+                    </div>
+                    <h4 class="font-bold text-sm text-gray-800 mb-1 truncate">${item.keywords[0]}</h4>
+                    <p class="text-xs text-gray-500 line-clamp-2">${item.answer}</p>
+                `;
+                grid.appendChild(div);
+            });
+        }
+
+        function saveEntry() {
+            const category = document.getElementById('entry-category').value;
+            const keywordStr = document.getElementById('entry-keywords').value;
+            const answer = document.getElementById('entry-answer').value;
+            const keywords = keywordStr.split(',').map(k => k.trim().toLowerCase()).filter(k => k.length > 0);
+
+            if (currentEditId) {
+                const index = db.findIndex(x => x.id === currentEditId);
+                if (index !== -1) db[index] = { id: currentEditId, category, keywords, answer };
+            } else {
+                db.unshift({ id: Date.now(), category, keywords, answer });
+            }
+            saveToStorage();
+            showDashboard();
+        }
+
+        function deleteEntry() {
+            if(confirm('Delete this entry?')) {
+                db = db.filter(x => x.id !== currentEditId);
+                saveToStorage();
+                showDashboard();
+            }
+        }
+
+        // --- CHAT LOGIC ---
+        function appendMessage(sender, text, isUser = false) {
+            if(introView) introView.classList.add('hidden');
+            const div = document.createElement('div');
+            div.className = `flex ${isUser ? 'justify-end' : 'justify-start'} anim-enter`;
+            
+            if (isUser) {
+                // User: Yellow bubble, Black text
+                div.innerHTML = `
+                    <div class="bg-umb-yellow text-black px-5 py-3 rounded-2xl rounded-br-none max-w-[85%] text-sm font-bold shadow-sm border border-umb-yellow">
+                        ${text}
+                    </div>
+                `;
+            } else {
+                // Bot: Grey bubble, Black text + UMB Avatar
+                const parsed = marked.parse(text);
+                div.innerHTML = `
+                    <div class="flex items-start max-w-[90%]">
+                        <div class="w-8 h-8 bg-umb-dark rounded-full flex items-center justify-center text-umb-yellow text-[10px] font-extrabold mr-2 shrink-0 mt-1 border-2 border-umb-yellow">UMB</div>
+                        <div class="bg-gray-100 text-black px-5 py-4 rounded-2xl rounded-tl-none text-sm leading-relaxed prose prose-sm border border-gray-200 shadow-sm">
+                            ${parsed}
+                        </div>
+                    </div>
+                `;
+            }
+            msgContainer.appendChild(div);
+            chatBox.scrollTo({ top: chatBox.scrollHeight, behavior: 'smooth' });
+        }
+
+        function showTyping() {
+            const div = document.createElement('div');
+            div.id = 'typing-indicator';
+            div.className = 'flex justify-start anim-enter';
+            div.innerHTML = `
+                <div class="flex items-center">
+                     <div class="w-8 h-8 bg-umb-dark rounded-full flex items-center justify-center text-umb-yellow text-[10px] font-extrabold mr-2 shrink-0 border-2 border-umb-yellow">UMB</div>
+                     <div class="bg-gray-100 px-4 py-3 rounded-2xl rounded-tl-none flex space-x-1 border border-gray-200">
+                        <div class="w-1.5 h-1.5 bg-umb-dark rounded-full typing-dot"></div>
+                        <div class="w-1.5 h-1.5 bg-umb-dark rounded-full typing-dot"></div>
+                        <div class="w-1.5 h-1.5 bg-umb-dark rounded-full typing-dot"></div>
+                     </div>
+                </div>`;
+            msgContainer.appendChild(div);
+            chatBox.scrollTo({ top: chatBox.scrollHeight, behavior: 'smooth' });
+        }
+
+        function removeTyping() {
+            const indicator = document.getElementById('typing-indicator');
+            if (indicator) indicator.remove();
+        }
+
+        async function getGeminiResponse(userQuery) {
+            const knowledgeString = JSON.stringify(db.map(x => ({ keywords: x.keywords, answer: x.answer })));
+            const systemPrompt = `You are "Smart UMB", the official AI assistant for Universal Merchant Bank (Ghana). 
+            
+            KNOWLEDGE BASE (Priority 1):
+            ${knowledgeString}
+
+            INSTRUCTIONS:
+            1. **HIERARCHY:** Check the Knowledge Base first. If the answer is there, USE IT verbatim.
+            2. If not in the Knowledge Base, use Google Search to find answers on **https://www.myumbbank.com**.
+            3. Be polite, concise, and helpful.
+            `;
+
+            try {
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: userQuery }] }],
+                        tools: [{ google_search: {} }],
+                        systemInstruction: { parts: [{ text: systemPrompt }] }
+                    })
+                });
+                if (!response.ok) throw new Error('API Error');
+                const data = await response.json();
+                return data.candidates[0].content.parts[0].text;
+            } catch (error) {
+                console.error("Gemini API failed", error);
+                return null;
+            }
+        }
+
+        function getLocalFallback(userQuery) {
+            const cleanQuery = userQuery.toLowerCase();
+            let bestMatch = null;
+            let maxScore = 0;
+            db.forEach(entry => {
+                let score = 0;
+                entry.keywords.forEach(k => { if (cleanQuery.includes(k)) score++; });
+                if (score > maxScore) { maxScore = score; bestMatch = entry; }
+            });
+            return maxScore > 0 ? bestMatch.answer : "I can't connect to my AI brain right now, but I'm here to help. Please contact our support team at 0800-100880.";
+        }
+
+        async function sendMessage() {
+            const text = userInput.value.trim();
+            if (!text) return;
+
+            if (text.toLowerCase() === '/admin') {
+                userInput.value = '';
+                checkAdminAccess();
+                return;
+            }
+
+            appendMessage('User', text, true);
+            userInput.value = '';
+            showTyping();
+            
+            let response = await getGeminiResponse(text);
+            if (!response) response = getLocalFallback(text);
+
+            removeTyping();
+            appendMessage('Smart UMB', response, false);
+        }
+    </script>
+</body>
+</html>
