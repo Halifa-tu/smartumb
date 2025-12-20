@@ -199,21 +199,14 @@
 
     <!-- LOGIC -->
     <script>
-        const apiKey = "AIzaSyC6TYdda_6cDmfVLcbx9_Y6veB5N-a3sWg"; //gemini api
+        const apiKey = "AIzaSyD-2TxPUsr4U46MLVvKiqYJBNwNCH0mj9U"; // API Key
         const chatBox = document.getElementById('chat-box');
         const msgContainer = document.getElementById('messages-container');
         const userInput = document.getElementById('user-input');
         const introView = document.getElementById('intro-view');
         
         // --- DATA ---
-        const defaultData = [
-            { id: 1, category: 'General', keywords: ['history', 'founded', 'about'], answer: "Universal Merchant Bank (UMB) opened its doors on March 15, 1972. We are a leading indigenous Ghanaian bank, formerly known as 'Merchant Bank'." },
-            { id: 2, category: 'Leadership', keywords: ['ceo', 'manager', 'leadership', 'boss'], answer: "As of late 2024, **Mr. Felix Apau Awuku** has been appointed as the Acting CEO of UMB Bank, following Bank of Ghana approval." },
-            { id: 3, category: 'Accounts', keywords: ['open', 'account', 'requirements'], answer: "To open a personal account: Valid Ghana Card, Account opening form, 2 passport photos, Proof of address (Utility bill/GPS). Visit any branch or use the SpeedApp." },
-            { id: 4, category: 'Digital', keywords: ['speedapp', 'mobile app'], answer: "The UMB SpeedApp is your bank in your pocket. Features: Instant transfers (Momo/Bank), Bill Payments, Airtime Top-up, Loan Requests." },
-            { id: 5, category: 'Loans', keywords: ['loan', 'soda', 'salary advance'], answer: "We offer: Salary Overdraft (SODA), Personal Loans, SME Loans, and Auto Loans. Visit a branch to apply." },
-            { id: 6, category: 'Support', keywords: ['contact', 'phone', 'help'], answer: "Available 24/7. Toll-Free: 0800-100880. Direct: +233 302 666 331. Email: info@myumbbank.com." }
-        ];
+        const defaultData = [];
 
         let db = JSON.parse(localStorage.getItem('umb_kb')) || defaultData;
         let isAdmin = false;
@@ -407,7 +400,7 @@
 
             INSTRUCTIONS:
             1. **HIERARCHY:** Check the Knowledge Base first. If the answer is there, USE IT verbatim.
-            2. If not in the Knowledge Base, use Google Search to find answers on **https://www.myumbbank.com**.
+            2. If not in the Knowledge Base, use Google Search to find answers on **https://www.myumbbank.com** or other credible financial sources regarding UMB Bank.
             3. Be polite, concise, and helpful.
             `;
 
