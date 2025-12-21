@@ -205,7 +205,24 @@
 
     <!-- LOGIC -->
     <script>
-       
+       // using multiple keys
+const apiKeys = [
+  "AIzaSyBlZA9w8o-N--myVRQyPtDxG7SPMxgU2Pc",
+  "AIzaSyDtqq4gTU1XL3SHPd062GAjGJ3fInmmvpo",
+  "AIzaSyBmSCaw3RXeXaB1yZuWLlG8SdAePmBZeTQ",
+  "AIzaSyCzykiQqLowmFv6P6a01t-BbxxyDT_bMEE"
+];
+
+// Keeps track of which key to use next
+let currentIndex = 0;
+
+//make an API request
+function getNextApiKey() {
+  const key = apiKeys[currentIndex];
+  currentIndex = (currentIndex + 1) % apiKeys.length;
+  return key;
+}
+
         const apiKey = "AIzaSyBlZA9w8o-N--myVRQyPtDxG7SPMxgU2Pc"; // api
         
         const chatBox = document.getElementById('chat-box');
